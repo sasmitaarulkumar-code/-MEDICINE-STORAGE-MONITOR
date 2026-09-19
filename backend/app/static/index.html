@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDGUARD — Intelligent Medicine Storage Monitoring & Early Warning System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-black tracking-tight text-slate-900">MED<span class="text-emerald-600">GUARD</span></span>
+                    <span class="ml-2 text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">IoT + AI</span>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
+                <a href="#problem" class="hover:text-emerald-600 transition">Core Problem</a>
+                <a href="#solution" class="hover:text-emerald-600 transition">Our Solution</a>
+                <a href="#differentiation" class="hover:text-emerald-600 transition">Intelligence Engine</a>
+                <a href="#architecture" class="hover:text-emerald-600 transition">Architecture</a>
+                <a href="#specs" class="hover:text-emerald-600 transition">Hardware</a>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="/docs" target="_blank" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+                    <i class="fa-solid fa-code mr-1.5 text-emerald-600"></i> API Docs
+                </a>
+                <a href="/dashboard" class="px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 transition flex items-center">
+                    Launch Dashboard <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-6">
+                <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Hackathon-Ready IoT & AI Prototype for Healthcare</span>
+            </div>
+            <h1 class="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight">
+                Intelligent Medicine Storage Monitoring & <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Early Warning System</span>
+            </h1>
+            <p class="mt-6 text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto font-normal leading-relaxed">
+                Continuous IoT multi-sensor telemetry, predictive thermal drift forecasting, and an operational 0–100 risk score that warns healthcare staff <em>before</em> cold-chain medicine excursions occur.
+            </p>
+
+            <div class="mt-10 flex flex-wrap justify-center gap-4">
+                <a href="/dashboard" class="px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-600/30 transition flex items-center">
+                    <i class="fa-solid fa-desktop mr-2"></i> Open Live Dashboard
+                </a>
+                <a href="/dashboard#demo-panel" class="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-base shadow-md transition flex items-center">
+                    <i class="fa-solid fa-play mr-2 text-amber-400"></i> Run 3-Min Judge Demo
+                </a>
+            </div>
+
+            <!-- Trust Badge Banner -->
+            <div class="mt-12 max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-temperature-arrow-up"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Early Warning</div>
+                        <div class="text-sm font-bold text-slate-900">Predictive Drift Trend</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-wifi"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Offline-First</div>
+                        <div class="text-sm font-bold text-slate-900">Local Cache & Alarms</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Batch Impact View</div>
+                        <div class="text-sm font-bold text-slate-900">Affected Inventory Trace</div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500 font-medium">Risk Metric</div>
+                        <div class="text-sm font-bold text-slate-900">0–100 Operational Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Core Problem Section -->
+    <section id="problem" class="py-16 bg-white border-y border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mx-auto text-center">
+                <span class="text-emerald-600 font-bold text-xs uppercase tracking-wider">The Challenge</span>
+                <h2 class="text-3xl font-black text-slate-900 mt-2">Why Conventional Temperature Logging Fails</h2>
+                <p class="mt-4 text-slate-600">
+                    Hospitals, community pharmacies, and rural clinics across the world still rely heavily on manual clipboard checks twice a day. When a refrigerator door fails or a compressor trips overnight, deviations are only discovered after critical vaccines and insulin have suffered irreversible thermal degradation.
+                </p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="p-6 rounded-2xl bg-rose-50/50 border border-rose-100">
+                    <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Delayed Problem Detection</h3>
+                    <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                        Manual checks occur at 9 AM and 5 PM. A cooling failure at 6 PM remains completely unnoticed for 15 hours until the next morning shift.
+                    </p>
+                </div>
+                <div class="p-6 rounded-2xl bg-amber-50/50 border border-amber-100">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-bell-slash"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Simplistic Threshold Alerts</h3>
+                    <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                        Existing digital monitors only beep after temperature reaches 8.1°C. They do not analyze trends, leaving zero reaction time for staff.
+                    </p>
+                </div>
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="w-12 h-12 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-clipboard-question"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">No Inventory Correlation</h3>
+                    <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+                        Raw sensor logs lack batch tracking. Pharmacists cannot instantly determine which medicines, batches, or patient doses were impacted.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Product Differentiators -->
+    <section id="differentiation" class="py-16 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <span class="text-emerald-600 font-bold text-xs uppercase tracking-wider">Product Innovation</span>
+                <h2 class="text-3xl font-black text-slate-900 mt-2">10 Questions MEDGUARD Solves Intelligently</h2>
+                <p class="mt-3 text-slate-600">Rather than a trivial threshold tripwire, MEDGUARD acts as an operational intelligence co-pilot:</p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">1</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">What is happening?</h4>
+                        <p class="text-sm text-slate-600 mt-1">Multi-sensor telemetry: Temperature, humidity, light intrusion, door latch state, and primary power.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">2</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">Why is it happening?</h4>
+                        <p class="text-sm text-slate-600 mt-1">Identifies root causes: Door left open, compressor loss, mains power outage, or sudden light intrusion.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">3</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">How serious is it?</h4>
+                        <p class="text-sm text-slate-600 mt-1">0–100 Weighted Storage Risk Score (Safe, Caution, High Risk, Critical) evaluating magnitude and persistence.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">4</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">Which medicines are affected?</h4>
+                        <p class="text-sm text-slate-600 mt-1">Direct linkage to medicine batch inventory, showing affected quantities, expiry dates, and manufacturer guidelines.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">5</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">How much time is available to respond?</h4>
+                        <p class="text-sm text-slate-600 mt-1">Predictive trend slope estimates minutes until threshold breach while the unit is still within safe limits.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex space-x-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-sm">6</div>
+                    <div>
+                        <h4 class="font-bold text-slate-900">What should the user do?</h4>
+                        <p class="text-sm text-slate-600 mt-1">Standardized cold-chain SOP guidance: Quarantine instructions, inspection prompts, and escalation paths.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- System Architecture Diagram Section -->
+    <section id="architecture" class="py-16 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-emerald-600 font-bold text-xs uppercase tracking-wider">End-to-End Flow</span>
+                <h2 class="text-3xl font-black text-slate-900 mt-2">Robust System Architecture</h2>
+                <p class="mt-3 text-slate-600">Engineered with offline resilience, low-latency WebSockets, and SQLite WAL concurrent persistence.</p>
+            </div>
+
+            <div class="bg-slate-900 text-white p-8 rounded-2xl shadow-xl overflow-x-auto">
+                <div class="flex items-center justify-between min-w-[750px] text-center">
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl w-48">
+                        <i class="fa-solid fa-microchip text-emerald-400 text-2xl mb-2"></i>
+                        <h5 class="font-bold text-sm">ESP32 IoT Node</h5>
+                        <p class="text-xs text-slate-400 mt-1">DHT22 + LDR + Reed + Power Sense + Flash Ring Buffer</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-500 text-lg"></i>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl w-48">
+                        <i class="fa-solid fa-tower-broadcast text-blue-400 text-2xl mb-2"></i>
+                        <h5 class="font-bold text-sm">Transport Layer</h5>
+                        <p class="text-xs text-slate-400 mt-1">HTTP REST Ingest + Catch-Up Batch Sync</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-500 text-lg"></i>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl w-48">
+                        <i class="fa-solid fa-server text-purple-400 text-2xl mb-2"></i>
+                        <h5 class="font-bold text-sm">FastAPI Backend</h5>
+                        <p class="text-xs text-slate-400 mt-1">0-100 Risk Engine + Trend Forecaster + SQLite WAL</p>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-slate-500 text-lg"></i>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl w-48">
+                        <i class="fa-solid fa-chart-line text-emerald-400 text-2xl mb-2"></i>
+                        <h5 class="font-bold text-sm">Web Dashboard</h5>
+                        <p class="text-xs text-slate-400 mt-1">WebSocket Push + Multi-Storage + Impact View</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer & Disclaimer -->
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center pb-8 border-b border-slate-800">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <span class="text-white font-black text-lg tracking-tight">MEDGUARD</span>
+                </div>
+                <div class="text-xs text-slate-500 max-w-2xl text-center md:text-right">
+                    <strong>Responsible Design Disclaimer:</strong> MEDGUARD monitors environmental storage conditions. It does not determine clinical efficacy or authorize patient administration. Qualified healthcare personnel must verify medicines against official monographs.
+                </div>
+            </div>
+            <div class="pt-6 flex flex-col md:flex-row justify-between items-center text-xs">
+                <div>&copy; 2026 MEDGUARD Team. Open Source Healthcare IoT Innovation.</div>
+                <div class="mt-4 md:mt-0 space-x-4">
+                    <a href="/dashboard" class="text-emerald-400 hover:underline">Dashboard</a>
+                    <a href="/docs" class="hover:text-white">API Docs</a>
+                    <a href="https://github.com" target="_blank" class="hover:text-white">GitHub Project</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

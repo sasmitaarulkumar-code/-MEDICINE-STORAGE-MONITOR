@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDGUARD — Healthcare Cold-Chain Control Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js for real-time telemetry charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .pulse-slow { animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .danger-glow { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
+        .caution-glow { box-shadow: 0 0 20px rgba(245, 158, 11, 0.35); }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation & Status Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="/" class="flex items-center space-x-2">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <span class="text-xl font-black text-slate-900 tracking-tight">MED<span class="text-emerald-600">GUARD</span></span>
+                </a>
+                <span class="text-slate-300">|</span>
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:inline">Healthcare Storage Intelligence</span>
+            </div>
+
+            <!-- Global Status & Action Pill -->
+            <div class="flex items-center space-x-4">
+                <!-- WebSocket Connection State -->
+                <div id="ws-indicator" class="flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="ws-text">Live Telemetry</span>
+                </div>
+
+                <!-- Audio Mute Button -->
+                <button id="btn-toggle-audio" onclick="toggleAudio()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition" title="Toggle Acoustic Alert Sound">
+                    <i id="audio-icon" class="fa-solid fa-volume-high text-slate-600"></i>
+                </button>
+
+                <!-- Audit Logs Button -->
+                <button onclick="openAuditModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-clock-rotate-left mr-1.5 text-slate-500"></i> Audit Trail
+                </button>
+
+                <!-- Compliance Report Button -->
+                <button onclick="openReportModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-file-waveform mr-1.5 text-slate-500"></i> Reports
+                </button>
+
+                <!-- User Profile Pill -->
+                <div class="flex items-center space-x-2 pl-3 border-l border-slate-200">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 font-bold text-xs">
+                        EV
+                    </div>
+                    <div class="hidden lg:block text-left">
+                        <div class="text-xs font-bold text-slate-900 leading-none">Dr. E. Vance</div>
+                        <div class="text-[10px] text-slate-500 leading-tight">Chief Pharmacist (Admin)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Subheader / Emergency Banner (Hidden by default, shown during power failure / high risk) -->
+    <div id="emergency-banner" class="hidden bg-rose-600 text-white px-4 py-2.5 text-center text-sm font-bold flex items-center justify-center space-x-2 animate-pulse">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        <span id="emergency-banner-text">CRITICAL STORAGE EXCURSION DETECTED</span>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+        <!-- Multi-Storage Unit Selector Bar -->
+        <section class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0" id="unit-tabs-container">
+                <!-- Injected dynamically via JavaScript -->
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="openAffectedInventoryModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center">
+                    <i class="fa-solid fa-boxes-stacked mr-1.5"></i> Check Affected Inventory (<span id="btn-affected-count">0</span>)
+                </button>
+                <button onclick="openConfigModal()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition flex items-center">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Configure Limits
+                </button>
+            </div>
+        </section>
+
+        <!-- Predictive Early Warning & Anomaly Alert Card -->
+        <div id="ai-alert-banner" class="hidden rounded-xl p-4 border transition-all duration-300 flex items-start space-x-3">
+            <div id="ai-alert-icon-wrap" class="w-9 h-9 rounded-lg flex items-center justify-center text-white flex-shrink-0 mt-0.5">
+                <i id="ai-alert-icon" class="fa-solid fa-wave-square"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between">
+                    <h4 id="ai-alert-title" class="font-bold text-sm text-slate-900">Predictive Early Warning</h4>
+                    <span id="ai-alert-confidence" class="text-xs px-2 py-0.5 rounded-full font-semibold bg-white/80 border">Confidence: 94%</span>
+                </div>
+                <p id="ai-alert-message" class="text-xs text-slate-700 mt-1 leading-relaxed">Early failure trend detected.</p>
+                <div id="ai-alert-action" class="mt-2 text-xs font-semibold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-circle-info mr-1 text-emerald-600"></i> Recommended Action: Inspect door seal and compressor coils.
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Operational Metric Cards Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- 1. Temperature -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Temperature</span>
+                    <i class="fa-solid fa-temperature-half text-slate-400"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="val-temperature" class="text-3xl font-black text-slate-900">--</span>
+                    <span class="text-sm font-bold text-slate-500">°C</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Range:</span>
+                    <span id="lbl-temp-range" class="font-bold text-slate-700">2.0°C – 8.0°C</span>
+                </div>
+                <div id="bar-temp" class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-temp-fill" class="bg-emerald-500 h-full w-1/2 transition-all"></div>
+                </div>
+            </div>
+
+            <!-- 2. Humidity -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Humidity</span>
+                    <i class="fa-solid fa-droplet text-blue-400"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="val-humidity" class="text-3xl font-black text-slate-900">--</span>
+                    <span class="text-sm font-bold text-slate-500">%</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Upper Limit:</span>
+                    <span id="lbl-humid-limit" class="font-bold text-slate-700">65.0%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-humid-fill" class="bg-blue-500 h-full w-1/2 transition-all"></div>
+                </div>
+            </div>
+
+            <!-- 3. Light Intrusion -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Light Exposure</span>
+                    <i class="fa-solid fa-sun text-amber-400"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="val-light" class="text-3xl font-black text-slate-900">--</span>
+                    <span class="text-sm font-bold text-slate-500">Lux</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Cabinet Status:</span>
+                    <span id="lbl-light-status" class="font-bold text-emerald-600">Dark / Sealed</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-light-fill" class="bg-amber-400 h-full w-1/12 transition-all"></div>
+                </div>
+            </div>
+
+            <!-- 4. Door Latch State -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Door Latch</span>
+                    <i id="icon-door" class="fa-solid fa-door-closed text-slate-400"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-2">
+                    <span id="val-door" class="text-2xl font-black text-emerald-600">CLOSED</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>State Duration:</span>
+                    <span id="val-door-duration" class="font-bold text-slate-700">0s</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-door-fill" class="bg-emerald-500 h-full w-full"></div>
+                </div>
+            </div>
+
+            <!-- 5. Primary Power -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Power Line</span>
+                    <i id="icon-power" class="fa-solid fa-plug-circle-bolt text-emerald-500"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-1">
+                    <span id="val-power" class="text-xl font-black text-emerald-600">HEALTHY</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Battery Backup:</span>
+                    <span id="val-battery" class="font-bold text-slate-700">3.3V (100%)</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-power-fill" class="bg-emerald-500 h-full w-full"></div>
+                </div>
+            </div>
+
+            <!-- 6. Operational Risk Score (0-100) -->
+            <div id="card-risk" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Risk Score</span>
+                    <i class="fa-solid fa-shield-heart text-emerald-500"></i>
+                </div>
+                <div class="mt-2 flex items-baseline space-x-2">
+                    <span id="val-risk-score" class="text-3xl font-black text-emerald-600">12</span>
+                    <span class="text-xs font-bold text-slate-400">/100</span>
+                    <span id="badge-risk-status" class="ml-auto text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">SAFE</span>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                    <span>Operational Level:</span>
+                    <span id="lbl-risk-subtext" class="font-bold text-emerald-700">All Optimal</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div id="bar-risk-fill" class="bg-emerald-500 h-full w-1/12 transition-all"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Telemetry Charts & Alert Hub Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left 2 Cols: Time-Series Graphs -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Temperature History Chart -->
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base">Real-Time Temperature Stream (°C)</h3>
+                            <p class="text-xs text-slate-500">Configured safety boundaries [2.0°C – 8.0°C] with rolling trendline</p>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="inline-flex items-center text-slate-600"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block mr-1"></span> Live Temp</span>
+                            <span class="inline-flex items-center text-slate-400"><span class="w-3 h-0.5 bg-rose-400 inline-block mr-1"></span> Upper Limit (8°C)</span>
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Humidity & Risk Score Charts (2 Columns) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 text-sm mb-2">Humidity History (%)</h4>
+                        <div class="h-44">
+                            <canvas id="humidChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 text-sm mb-2">Risk Score History (0–100)</h4>
+                        <div class="h-44">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Col: Active Alerts & Corrective SOP Actions -->
+            <div class="space-y-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base">Active Alerts Center</h3>
+                            <p class="text-xs text-slate-500">Multi-level threshold & anomaly excursions</p>
+                        </div>
+                        <span id="count-active-alerts" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">0 Active</span>
+                    </div>
+
+                    <!-- Alerts Scroll Container -->
+                    <div id="alerts-container" class="space-y-3 flex-1 overflow-y-auto max-h-[420px]">
+                        <!-- Dynamic Alert Cards rendered here -->
+                        <div class="text-center py-10 text-slate-400">
+                            <i class="fa-regular fa-circle-check text-4xl text-emerald-400 mb-2"></i>
+                            <div class="text-sm font-semibold text-slate-600">All storage conditions safe</div>
+                            <div class="text-xs text-slate-400">No active excursions detected.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FLOATING HACKATHON 3-MINUTE DEMO CONTROLLER (Section 23) -->
+    <div id="demo-panel" class="fixed bottom-4 right-4 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl p-4 border border-slate-700 w-96 backdrop-blur-md bg-opacity-95">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-700 mb-3">
+            <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+                <span class="text-xs font-black uppercase tracking-wider text-amber-400">Hackathon Demo Controller</span>
+            </div>
+            <button onclick="toggleDemoMinimize()" class="text-slate-400 hover:text-white text-xs">
+                <i id="demo-min-icon" class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="demo-body" class="space-y-2 text-xs">
+            <p class="text-slate-300 text-[11px] mb-2 leading-relaxed">
+                Click any scenario below to demonstrate MEDGUARD's end-to-end intelligence to judges in <3 minutes:
+            </p>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="triggerDemoScenario(1)" class="p-2 rounded-lg bg-slate-800 hover:bg-emerald-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-emerald-400">1. Normal Baseline</div>
+                    <div class="text-[10px] text-slate-400">Safe: 4.2°C, Door Closed</div>
+                </button>
+                <button onclick="triggerDemoScenario(2)" class="p-2 rounded-lg bg-slate-800 hover:bg-amber-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-amber-400">2. Early Trend</div>
+                    <div class="text-[10px] text-slate-400">Warming trend warning</div>
+                </button>
+                <button onclick="triggerDemoScenario(3)" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-rose-400">3. Excursion >10°C</div>
+                    <div class="text-[10px] text-slate-400">Critical breach + Inventory</div>
+                </button>
+                <button onclick="triggerDemoScenario(4)" class="p-2 rounded-lg bg-slate-800 hover:bg-amber-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-amber-400">4. Door Ajar</div>
+                    <div class="text-[10px] text-slate-400">Door open > 3 minutes</div>
+                </button>
+                <button onclick="triggerDemoScenario(5)" class="p-2 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-rose-400">5. Power Outage</div>
+                    <div class="text-[10px] text-slate-400">Power failure event</div>
+                </button>
+                <button onclick="triggerDemoScenario(6)" class="p-2 rounded-lg bg-slate-800 hover:bg-emerald-600 hover:text-white border border-slate-700 transition text-left">
+                    <div class="font-bold text-emerald-400">6. Full Recovery</div>
+                    <div class="text-[10px] text-slate-400">Restores safe baseline</div>
+                </button>
+            </div>
+            <div class="pt-2 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-800 mt-2">
+                <span>Auto-updates live via WebSockets</span>
+                <button onclick="resetDemoSystem()" class="text-rose-400 hover:underline">Reset System</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: Affected Inventory Inspector (Section 13) -->
+    <div id="modal-affected-inventory" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Potentially Affected Inventory</h3>
+                        <p class="text-xs text-slate-500">Storage Unit: <span id="modal-affected-unit" class="font-bold text-slate-700">--</span></p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-affected-inventory')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+                <!-- Summary Banner -->
+                <div id="modal-affected-summary" class="p-4 rounded-xl bg-amber-50 border border-amber-200 flex justify-between items-center">
+                    <div>
+                        <div class="text-xs text-amber-800 font-bold uppercase">Incident Impact Summary</div>
+                        <div class="text-sm font-bold text-amber-950 mt-0.5">
+                            <span id="modal-affected-batch-count">0</span> Batches (<span id="modal-affected-dose-count">0</span> total doses) subject to storage excursion
+                        </div>
+                    </div>
+                    <span id="modal-affected-status-pill" class="px-2.5 py-1 rounded-full text-xs font-black bg-amber-200 text-amber-900">CAUTION</span>
+                </div>
+
+                <!-- Table of affected batches -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="min-w-full divide-y divide-slate-200 text-xs">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-3 py-2.5 text-left font-bold text-slate-600">Medicine Name</th>
+                                <th class="px-3 py-2.5 text-left font-bold text-slate-600">Batch #</th>
+                                <th class="px-3 py-2.5 text-left font-bold text-slate-600">Qty</th>
+                                <th class="px-3 py-2.5 text-left font-bold text-slate-600">Expiry</th>
+                                <th class="px-3 py-2.5 text-left font-bold text-slate-600">Specific Deviation</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-affected-table-body" class="divide-y divide-slate-100 bg-white font-medium">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Standard Operating Procedure Guidance (Section 13 & 30) -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5">
+                    <div class="font-bold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-clipboard-check mr-1.5 text-emerald-600"></i> Standard Operating Procedure (SOP) Advisory:
+                    </div>
+                    <p>1. Quarantine affected storage compartment; <strong>do not automatically discard stock</strong>.</p>
+                    <p>2. Record peak deviation temperature and elapsed exposure duration in unit logbook.</p>
+                    <p>3. Review product stability monograph / WHO PQS / USP &lt;1079&gt; guidelines.</p>
+                    <p>4. Consult Quality Assurance Officer before returning stock to dispensing circulation.</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end space-x-2">
+                <button onclick="closeModal('modal-affected-inventory')" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 transition">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Alert Acknowledgement Modal (Section 14 & 15) -->
+    <div id="modal-ack-alert" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 class="font-bold text-slate-900 text-base mb-1">Acknowledge Storage Alert</h3>
+            <p class="text-xs text-slate-500 mb-4">Record your corrective inspection notes into the tamper-evident audit log.</p>
+            
+            <input type="hidden" id="ack-alert-id" value="">
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Staff Action Notes</label>
+                    <textarea id="ack-notes" rows="3" class="w-full text-xs p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="e.g. Inspected door seal, re-closed latch securely. Compressor confirmed running."></textarea>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end space-x-2">
+                <button onclick="closeModal('modal-ack-alert')" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancel</button>
+                <button onclick="submitAlertAcknowledgement()" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">Save Acknowledgement</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Compliance Reports & Export (Section 17) -->
+    <div id="modal-report" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-file-contract"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Cold-Chain Compliance & Storage Report</h3>
+                        <p class="text-xs text-slate-500">7-Day Statistical Audit Summary</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-report')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-4 flex-1" id="report-modal-body">
+                <!-- Report content loaded dynamically -->
+                <div class="text-center py-10 text-slate-400">Loading statistical report...</div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                <button onclick="downloadCSVReport()" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition flex items-center">
+                    <i class="fa-solid fa-file-csv mr-2 text-emerald-400"></i> Download CSV Telemetry
+                </button>
+                <button onclick="window.print()" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center">
+                    <i class="fa-solid fa-print mr-2"></i> Print / Save as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Audit Logs Viewer (Section 14) -->
+    <div id="modal-audit" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Regulatory Audit Trail</h3>
+                        <p class="text-xs text-slate-500">Tamper-evident log of staff actions and environmental events</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-audit')" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <table class="min-w-full divide-y divide-slate-200 text-xs">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-bold text-slate-600">Timestamp</th>
+                                <th class="px-3 py-2 text-left font-bold text-slate-600">User</th>
+                                <th class="px-3 py-2 text-left font-bold text-slate-600">Action</th>
+                                <th class="px-3 py-2 text-left font-bold text-slate-600">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body" class="divide-y divide-slate-100 bg-white">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Configure Storage Unit Limits (Section 5) -->
+    <div id="modal-config" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            <h3 class="font-bold text-slate-900 text-base mb-1">Configure Storage Limits</h3>
+            <p class="text-xs text-slate-500 mb-4">Set official temperature and humidity parameters for this unit.</p>
+            
+            <div class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Min Temperature (°C)</label>
+                        <input id="cfg-min-temp" type="number" step="0.1" class="w-full p-2.5 border border-slate-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Max Temperature (°C)</label>
+                        <input id="cfg-max-temp" type="number" step="0.1" class="w-full p-2.5 border border-slate-200 rounded-lg">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Min Humidity (%)</label>
+                        <input id="cfg-min-humid" type="number" step="1" class="w-full p-2.5 border border-slate-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Max Humidity (%)</label>
+                        <input id="cfg-max-humid" type="number" step="1" class="w-full p-2.5 border border-slate-200 rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end space-x-2">
+                <button onclick="closeModal('modal-config')" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">Cancel</button>
+                <button onclick="saveStorageConfig()" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded Audio Synthesizer for Local Alert Buzzes -->
+    <audio id="audio-alert" preload="auto">
+        <source src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU..." type="audio/wav">
+    </audio>
+
+    <!-- Load Dashboard Client Logic -->
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
